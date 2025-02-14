@@ -10,7 +10,7 @@ import (
 
 // You normally want to run this under a separate "Testing" subscription
 // For lab purposes you will use your assigned subscription under the Cloud Dev/Ops program tenant
-var subscriptionID string = "<your-azure-subscription-id"
+var subscriptionID string = "a9fc334c-4082-43d8-95c1-4bb0f83c8a71"
 
 func TestAzureLinuxVMCreation(t *testing.T) {
 	terraformOptions := &terraform.Options{
@@ -18,7 +18,7 @@ func TestAzureLinuxVMCreation(t *testing.T) {
 		TerraformDir: "../",
 		// Override the default terraform variables
 		Vars: map[string]interface{}{
-			"labelPrefix": "<your-college-id>",
+			"labelPrefix": "gao00094",
 		},
 	}
 
@@ -33,4 +33,14 @@ func TestAzureLinuxVMCreation(t *testing.T) {
 
 	// Confirm VM exists
 	assert.True(t, azure.VirtualMachineExists(t, vmName, resourceGroupName, subscriptionID))
+
+	// Confirm NIC exists and is connected to the VM
+	nics := azure.GetVirtualMachineNics(t, vmName, resourceGroupName, subscriptionID)
+	nicName := terraform.Output(t, terraformOptions, "nic_name")
+	assert.Contains(t, nics, nicName, "NIC should be attached to the VM")
+
+	// Confirm VM is running the correct Ubuntu version
+	expectedUbuntuVersion := "24.04"
+	vmUbuntuVersion := azure.GetVirtualMachineImage(t, vmName, resourceGroupName, subscriptionID)
+	assert.Contains(t, vmUbuntuVersion, expectedUbuntuVersion, "VM should be running the correct Ubuntu version")
 }
